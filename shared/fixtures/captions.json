@@ -1,0 +1,20 @@
+{
+  "_note": "Shared test vectors for the caption validator (Python: core/jarvis_core/captions.py, TS: web/src/lib/captionGuard.ts). speech_text is data for a future TTS engine and is never displayed. Roman Urdu samples are author-written and their naturalness is unreviewed. Negative cases deliberately contain Urdu/Arabic script as data.",
+  "cases": [
+    { "id": "en_plain", "lang": "en", "speech_text": "Here are your three notes.", "caption_text": "Here are your three notes.", "valid": true },
+    { "id": "ur_roman_basic", "lang": "ur-roman", "speech_text": "آپ کے نوٹس یہ ہیں۔", "caption_text": "Aap ke notes ye hain.", "valid": true },
+    { "id": "ur_en_codeswitch", "lang": "ur-en", "speech_text": "میں نے آپ کی meeting کا reminder set کر دیا ہے۔", "caption_text": "Maine aap ki meeting ka reminder set kar diya hai.", "valid": true },
+    { "id": "ur_roman_digits_punct", "lang": "ur-roman", "speech_text": "کل صبح ساڑھے نو بجے میٹنگ ہے۔", "caption_text": "Kal subah 9:30 baje meeting hai - please confirm kar dein?", "valid": true },
+    { "id": "ur_roman_urdu_script", "lang": "ur-roman", "speech_text": "آپ کے نوٹس یہ ہیں۔", "caption_text": "آپ کے نوٹس یہ ہیں۔", "valid": false, "reason": "arabic_script" },
+    { "id": "ur_en_mixed_script", "lang": "ur-en", "speech_text": "آپ کے نوٹس یہ ہیں۔", "caption_text": "Aap ke notes یہ hain", "valid": false, "reason": "arabic_script" },
+    { "id": "eastern_arabic_digit", "lang": "ur-roman", "speech_text": "ملاقات", "caption_text": "Meeting ٩ baje hai", "valid": false, "reason": "arabic_script" },
+    { "id": "persian_digits", "lang": "ur-roman", "speech_text": "ملاقات", "caption_text": "Meeting ۱۲ baje hai", "valid": false, "reason": "arabic_script" },
+    { "id": "presentation_form", "lang": "ur-en", "speech_text": "ملاقات", "caption_text": "Aap ﻻ", "valid": false, "reason": "arabic_script" },
+    { "id": "bidi_override", "lang": "ur-roman", "speech_text": "ملاقات", "caption_text": "Aap ke notes ‮hain", "valid": false, "reason": "bidi_control" },
+    { "id": "zero_width_joiner", "lang": "ur-roman", "speech_text": "ملاقات", "caption_text": "Aap‍ke notes", "valid": false, "reason": "bidi_control" },
+    { "id": "english_mismatch", "lang": "en", "speech_text": "Hello there", "caption_text": "Hallo there", "valid": false, "reason": "english_mismatch" },
+    { "id": "english_with_urdu_script", "lang": "en", "speech_text": "Hello آپ", "caption_text": "Hello آپ", "valid": false, "reason": "arabic_script" },
+    { "id": "empty_caption", "lang": "ur-roman", "speech_text": "ملاقات", "caption_text": "   ", "valid": false, "reason": "empty_caption" },
+    { "id": "unknown_lang", "lang": "fr", "speech_text": "Bonjour", "caption_text": "Bonjour", "valid": false, "reason": "unknown_lang" }
+  ]
+}

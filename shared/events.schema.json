@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Jarvis HUD event (Phase 1A, mock-only)",
+  "description": "Contract shared by the Python core (core/jarvis_core/events.py) and the HUD (web/src/hud/hudState.ts). speech_text is for future TTS only and must never be displayed; only caption_text is shown.",
+  "oneOf": [
+    { "$ref": "#/$defs/state" },
+    { "$ref": "#/$defs/transcript" },
+    { "$ref": "#/$defs/caption" },
+    { "$ref": "#/$defs/activity" },
+    { "$ref": "#/$defs/approval_request" },
+    { "$ref": "#/$defs/approval_resolved" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "state"],
+      "properties": {
+        "type": { "const": "state" },
+        "state": { "enum": ["idle", "listening", "thinking", "speaking", "error", "approval_needed"] }
+      }
+    },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "lang", "text"],
+      "properties": {
+        "type": { "const": "transcript" },
+        "lang": { "enum": ["en", "ur-roman", "ur-en"] },
+        "text": { "type": "string" }
+      }
+    },
+    "caption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "lang", "speech_text", "caption_text"],
+      "properties": {
+        "type": { "const": "caption" },
+        "lang": { "enum": ["en", "ur-roman", "ur-en"] },
+        "speech_text": { "type": "string" },
+        "caption_text": { "type": "string" }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "label", "status"],
+      "properties": {
+        "type": { "const": "activity" },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "status": { "enum": ["pending", "ok", "denied", "timeout", "blocked", "cancelled", "error"] },
+        "tier": { "enum": ["T0", "T1", "T2", "T3"] },
+        "approved_by": { "type": "string" }
+      }
+    },
+    "approval_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "tool", "tier", "summary", "args", "source", "timeout_s"],
+      "properties": {
+        "type": { "const": "approval_request" },
+        "id": { "type": "string" },
+        "tool": { "type": "string" },
+        "tier": { "enum": ["T0", "T1", "T2"] },
+        "summary": { "type": "string" },
+        "args": { "type": "object" },
+        "source": { "enum": ["user_request", "untrusted_content"] },
+        "timeout_s": { "type": "number" }
+      }
+    },
+    "approval_resolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "decision"],
+      "properties": {
+        "type": { "const": "approval_resolved" },
+        "id": { "type": "string" },
+        "decision": { "enum": ["approved", "denied", "timeout"] }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "message"],
+      "properties": {
+        "type": { "const": "error" },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}
