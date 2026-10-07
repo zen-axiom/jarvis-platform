@@ -1,28 +1,37 @@
 :root {
   color-scheme: dark;
 
-  --bg: #050a12;
-  --bg-2: #0a1424;
-  --panel: rgba(14, 26, 44, 0.78);
-  --line: rgba(127, 216, 255, 0.18);
-  --line-strong: rgba(127, 216, 255, 0.42);
-  --ink: #e6f4ff;
-  --muted: #8ba5ba;
+  /* surfaces */
+  --void: #02060d;
+  --deep: #050c18;
+  --panel: rgba(8, 20, 38, 0.72);
+  --panel-solid: #071326;
+  --line: rgba(120, 225, 255, 0.16);
+  --line-strong: rgba(120, 225, 255, 0.4);
+  --ink: #dff1ff;
+  --muted: #7fa3bf;
+  --faint: #4d6b85;
 
-  /* rgb triplets: the canvas reads these too */
-  --ice-rgb: 127, 216, 255;
-  --pulse-rgb: 140, 255, 214;
-  --amber-rgb: 255, 179, 64;
-  --red-rgb: 255, 93, 93;
+  /* accents as rgb triplets: the canvas reads these */
+  --cyan-rgb: 120, 225, 255;
+  --blue-rgb: 56, 142, 255;
+  --mint-rgb: 130, 255, 214;
+  --amber-rgb: 255, 176, 64;
+  --red-rgb: 255, 86, 86;
   --ok-rgb: 95, 227, 161;
 
-  --ice: rgb(var(--ice-rgb));
+  --cyan: rgb(var(--cyan-rgb));
+  --blue: rgb(var(--blue-rgb));
+  --mint: rgb(var(--mint-rgb));
   --amber: rgb(var(--amber-rgb));
   --red: rgb(var(--red-rgb));
   --ok: rgb(var(--ok-rgb));
 
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* type */
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
-  --radius: 12px;
-  --gutter: 16px;
+
+  --radius: 10px;
+  --rail: 304px;
+  --rail-wide: 336px;
 }

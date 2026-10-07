@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Jarvis HUD event (Phase 1A, mock-only)",
-  "description": "Contract shared by the Python core (core/jarvis_core/events.py) and the HUD (web/src/hud/hudState.ts). speech_text is for future TTS only and must never be displayed; only caption_text is shown.",
+  "description": "Contract shared by the Python core (core/jarvis_core/events.py) and the HUD (web/src/hud/hudState.ts). speech_text is for future TTS only and must never be displayed; only caption_text is shown. The mission and step events describe a planned multi-step task for the HUD; in Phase 1A only the mock stream emits them and the Python core never does.",
   "oneOf": [
     { "$ref": "#/$defs/state" },
     { "$ref": "#/$defs/transcript" },
@@ -9,7 +9,9 @@
     { "$ref": "#/$defs/activity" },
     { "$ref": "#/$defs/approval_request" },
     { "$ref": "#/$defs/approval_resolved" },
-    { "$ref": "#/$defs/error" }
+    { "$ref": "#/$defs/error" },
+    { "$ref": "#/$defs/mission" },
+    { "$ref": "#/$defs/step" }
   ],
   "$defs": {
     "state": {
@@ -87,6 +89,32 @@
       "properties": {
         "type": { "const": "error" },
         "message": { "type": "string" }
+      }
+    },
+    "mission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "title", "status"],
+      "properties": {
+        "type": { "const": "mission" },
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "enum": ["active", "done", "cancelled", "failed"] }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "mission_id", "label", "status"],
+      "properties": {
+        "type": { "const": "step" },
+        "id": { "type": "string" },
+        "mission_id": { "type": "string" },
+        "label": { "type": "string" },
+        "status": {
+          "enum": ["pending", "active", "ok", "denied", "timeout", "blocked", "cancelled", "error", "skipped"]
+        },
+        "note": { "type": "string" }
       }
     }
   }

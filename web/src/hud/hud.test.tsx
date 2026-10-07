@@ -77,7 +77,7 @@ describe("ApprovalCard", () => {
 
   it("shows the countdown", () => {
     renderCard(REQ);
-    expect(container.textContent).toContain("Auto-deny in 12s");
+    expect(container.textContent).toContain("auto-deny in 12s");
   });
 });
 

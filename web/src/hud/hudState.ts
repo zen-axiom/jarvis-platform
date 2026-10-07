@@ -27,6 +27,8 @@ export type ActivityStatus =
   | "blocked"
   | "cancelled"
   | "error";
+export type StepStatus = ActivityStatus | "active" | "skipped";
+export type MissionStatus = "active" | "done" | "cancelled" | "failed";
 export type ApprovalDecision = "approved" | "denied" | "timeout";
 export type ApprovalSource = "user_request" | "untrusted_content";
 
@@ -48,6 +50,20 @@ export interface ActivityItem {
   approved_by?: string;
 }
 
+export interface MissionStep {
+  id: string;
+  label: string;
+  status: StepStatus;
+  note?: string;
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  status: MissionStatus;
+  steps: MissionStep[];
+}
+
 export type HudEvent =
   | { type: "state"; state: HudState }
   | { type: "transcript"; lang: CaptionLang; text: string }
@@ -55,7 +71,9 @@ export type HudEvent =
   | ({ type: "activity" } & ActivityItem)
   | ({ type: "approval_request" } & ApprovalRequest)
   | { type: "approval_resolved"; id: string; decision: ApprovalDecision }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "mission"; id: string; title: string; status: MissionStatus }
+  | { type: "step"; id: string; mission_id: string; label: string; status: StepStatus; note?: string };
 
 export interface HudModel {
   state: HudState;
@@ -65,10 +83,11 @@ export interface HudModel {
   captionNotice: string | null;
   approval: ApprovalRequest | null;
   activity: ActivityItem[];
+  mission: Mission | null;
   error: string | null;
 }
 
-const MAX_ACTIVITY = 30;
+const MAX_ACTIVITY = 40;
 
 export function initialModel(): HudModel {
   return {
@@ -78,6 +97,7 @@ export function initialModel(): HudModel {
     captionNotice: null,
     approval: null,
     activity: [],
+    mission: null,
     error: null,
   };
 }
@@ -129,14 +149,56 @@ export function reduce(m: HudModel, e: HudEvent): HudModel {
       return { ...m, approval: m.approval?.id === e.id ? null : m.approval };
     case "error":
       return { ...m, error: displaySafe(e.message) };
+    case "mission": {
+      // A new mission id replaces the plan; the same id only updates its status.
+      const steps = m.mission?.id === e.id ? m.mission.steps : [];
+      return {
+        ...m,
+        mission: { id: e.id, title: displaySafe(e.title), status: e.status, steps },
+      };
+    }
+    case "step": {
+      if (!m.mission || m.mission.id !== e.mission_id) return m;
+      const step: MissionStep = {
+        id: e.id,
+        label: displaySafe(e.label),
+        status: e.status,
+        ...(e.note === undefined ? {} : { note: displaySafe(e.note) }),
+      };
+      const i = m.mission.steps.findIndex((s) => s.id === step.id);
+      const steps =
+        i >= 0 ? m.mission.steps.map((s, j) => (j === i ? step : s)) : [...m.mission.steps, step];
+      return { ...m, mission: { ...m.mission, steps } };
+    }
   }
 }
 
+const DONE_STEPS: readonly StepStatus[] = [
+  "ok",
+  "denied",
+  "timeout",
+  "blocked",
+  "cancelled",
+  "error",
+  "skipped",
+];
+
+/** How many of the mission's steps have reached a terminal status. */
+export function settledSteps(mission: Mission | null): number {
+  return mission ? mission.steps.filter((s) => DONE_STEPS.includes(s.status)).length : 0;
+}
+
+/** Fraction of the mission's steps that have reached a terminal status, 0..1. */
+export function missionProgress(mission: Mission | null): number {
+  if (!mission || mission.steps.length === 0) return 0;
+  return settledSteps(mission) / mission.steps.length;
+}
+
 export const STATE_LABEL: Record<HudState, string> = {
-  idle: "Idle",
+  idle: "Standby",
   listening: "Listening (mock - no microphone)",
-  thinking: "Thinking",
+  thinking: "Working",
   speaking: "Speaking (mock - no audio)",
-  error: "Something went wrong",
-  approval_needed: "Waiting for your approval",
+  error: "Fault",
+  approval_needed: "Awaiting your approval",
 };

@@ -68,7 +68,8 @@ const timeout: ApprovalAnswer = { decision: "timeout", allowSession: false };
 
 describe("scenarios", () => {
   const all: ScenarioName[] = [
-    "english", "roman_urdu", "approval", "grant", "untrusted", "blocked", "error", "badcaption",
+    "briefing", "english", "roman_urdu", "approval", "grant", "untrusted", "blocked", "error",
+    "badcaption",
   ]; // prettier-ignore
 
   it.each(all)("%s emits schema-conformant events and no Urdu script in the model", async (name) => {
@@ -167,6 +168,8 @@ describe("matchScenario", () => {
     ["send a message", "approval"],
     ["Ahmed ko message bhejo", "approval"],
     ["summarise this web page", "untrusted"],
+    ["run my evening briefing", "briefing"],
+    ["summarise my day", "briefing"],
     ["save a note", "grant"],
     ["mere notes dikhao", "roman_urdu"],
     ["what is in my notes", "english"],
@@ -227,4 +230,62 @@ describe("LiveRunner", () => {
     expect(events.some((e) => e.type === "activity" && e.status === "ok")).toBe(false);
     expect(events.at(-1)).toEqual({ type: "state", state: "idle" });
   }, 10_000);
+});
+
+describe("demo mission", () => {
+  const steps = (r: FakeRunner) =>
+    r.model().mission?.steps.map((s) => `${s.id}:${s.status}`) ?? [];
+
+  it("plans five steps and finishes them when the T2 action is approved", async () => {
+    const r = new FakeRunner([approve()]);
+    expect(await runScenario("briefing", r)).toBe("done");
+    expect(steps(r)).toEqual(["s1:ok", "s2:ok", "s3:ok", "s4:ok", "s5:ok"]);
+    expect(r.model().mission?.status).toBe("done");
+    expect(r.approvals).toBe(1);
+  });
+
+  it("stops at the approval and skips the rest when denied", async () => {
+    const r = new FakeRunner([deny]);
+    await runScenario("briefing", r);
+    expect(steps(r)).toEqual(["s1:ok", "s2:ok", "s3:ok", "s4:denied", "s5:skipped"]);
+    expect(r.model().mission?.status).toBe("cancelled");
+    // The sensitive send and the follow-up write must never run.
+    const ran = r.model().activity.filter((a) => a.status === "ok");
+    expect(ran.map((a) => a.id)).toEqual(["b1", "b2"]);
+    expect(ran.every((a) => a.tier === "T0")).toBe(true);
+  });
+
+  it("treats an approval timeout as not approved", async () => {
+    const r = new FakeRunner([timeout]);
+    await runScenario("briefing", r);
+    expect(steps(r).slice(3)).toEqual(["s4:timeout", "s5:skipped"]);
+    expect(r.model().mission?.status).toBe("cancelled");
+  });
+
+  it("every scenario declares a mission with at least one step", async () => {
+    for (const name of ["briefing", "english", "roman_urdu", "approval", "grant", "untrusted", "blocked", "error", "badcaption"] as ScenarioName[]) {
+      const r = new FakeRunner([approve(), approve()]);
+      await runScenario(name, r);
+      const mission = r.model().mission;
+      expect(mission, name).not.toBeNull();
+      expect(mission?.steps.length, name).toBeGreaterThan(0);
+      expect(mission?.title, name).toMatch(/demo/i);
+    }
+  });
+
+  it("cancelling marks the active step and the mission cancelled", async () => {
+    const r = new FakeRunner([approve()], 4);
+    expect(await runScenario("briefing", r)).toBe("cancelled");
+    const m = r.model();
+    expect(m.mission?.status).toBe("cancelled");
+    expect(m.mission?.steps.some((s) => s.status === "cancelled")).toBe(true);
+    expect(m.state).toBe("idle");
+  });
+
+  it("FROZEN previews all carry a mission with steps", () => {
+    for (const state of HUD_STATES) {
+      const m = FROZEN[state].reduce(reduce, initialModel());
+      expect(m.mission?.steps.length, state).toBe(5);
+    }
+  });
 });
